@@ -350,7 +350,8 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;
 
 <script>
 const PW  = 'Wego123@gds';
-const API = '/api/chat';
+const API = 'https://api.anthropic.com/v1/messages';
+const AKEY = '';
 
 const BASE = `You are Wegio, the official GDS AI flight assistant for Wego Travel Agency in Cairo, Egypt.
 You are an EXPERT in Sabre Red 360 (1S) and Galileo Travelport (1G).
@@ -772,7 +773,7 @@ async function extractText(file){
   }
   if(ext==='pdf'){
     const base64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-    const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},{type:'text',text:'Extract ALL text from this PDF. Include every command, table, row, column, and note. Output as plain structured text.'}]}]})});
+    const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AKEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},{type:'text',text:'Extract ALL text from this PDF. Include every command, table, row, column, and note. Output as plain structured text.'}]}]})});
     const d=await resp.json();
     if(d.content?.[0]?.text)return d.content[0].text;
     throw new Error('PDF extraction failed: '+(d.error?.message||JSON.stringify(d).substring(0,200)));
@@ -896,7 +897,7 @@ async function sendMessage(){
       const kl=entries.map((e,i)=>`[${i+1}] ${e.category} — "${e.title}":\n${e.content.substring(0,2000)}`).join('\n\n---\n\n');
       messages=[{role:'user',content:`Load this custom knowledge and confirm:\n\n${kl}`},{role:'assistant',content:`Confirmed. I have loaded all ${entries.length} knowledge item${entries.length>1?'s':''} and will use them in every answer.`},...messages];
     }
-    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:getSystemPrompt(),messages})});
+    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':AKEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:getSystemPrompt(),messages})});
     const data=await res.json();removeTyping();
     let reply='';
     if(data.content?.[0]?.text)reply=data.content[0].text;
